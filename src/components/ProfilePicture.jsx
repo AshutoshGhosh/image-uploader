@@ -9,30 +9,52 @@ import {
   Modal,
   Paper,
   IconButton,
-  Divider,
+  LinearProgress,
+  Badge,
   Grid,
+  Radio,
 } from "@mui/material";
 import { useDropzone } from "react-dropzone";
 import CloseIcon from "@mui/icons-material/Close";
+import CancelIcon from "@mui/icons-material/Cancel";
+import CropIcon from "@mui/icons-material/Crop";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 const ProfilePicture = ({ profilePic, onUpdateClick }) => {
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
-  //   const [selectedImage, setSelectedImage] = useState(null);
-  //   const [cropData, setCropData] = useState("");
-  //   const [loading, setLoading] = useState(false);
-  //   const [success, setSuccess] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: "image/jpeg, image/png",
     onDrop: (acceptedFiles) => {
-      const files = acceptedFiles.map((file) =>
+      if (acceptedFiles.length + files.length > 5) {
+        setError("You've reached the image limit");
+        return;
+      }
+      const newFiles = acceptedFiles.map((file) =>
         Object.assign(file, {
           preview: URL.createObjectURL(file),
+          progress: 100,
+          uploaded: true,
+          url: file.preview,
         })
       );
-      setFiles(files);
+      setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+      // setTimeout(() => {
+      //   const newFiles = acceptedFiles.map((file) =>
+      //     Object.assign(file, {
+      //       preview: URL.createObjectURL(file),
+      //       progress: 100,
+      //       uploaded: true,
+      //       url: file.preview,
+      //     })
+      //   );
+      //   setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+      // }, 2000);
+      setError("");
     },
     maxFiles: 5,
     maxSize: 5242880,
@@ -44,6 +66,9 @@ const ProfilePicture = ({ profilePic, onUpdateClick }) => {
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+  const handleDelete = (fileToDelete) => {
+    setFiles((prevFiles) => prevFiles.filter((file) => file !== fileToDelete));
+  };
 
   return (
     <>
@@ -168,52 +193,107 @@ const ProfilePicture = ({ profilePic, onUpdateClick }) => {
                 PNG, or JPG (Max 5MB)
               </Typography>
             </Box>
-            <Box mt={2} display={"flex"} alignItems={"center"}>
-              {files.map((file, index) => {
-                return (
-                  <>
-                    <img
-                      key={index}
-                      src={file.preview}
-                      alt="Preview"
-                      onClick={() => setSelectedImage(file)}
-                      style={{
-                        width: "100px",
-                        height: "100px",
-                        cursor: "pointer",
-                      }}
-                    />
-                    <Typography key={index} variant="body2" noWrap>
+            <Box mt={2} sx={{ overflowX: "auto", maxHeight: "12rem" }}>
+              {files.map((file, index) => (
+                <Box key={index} display="flex" alignItems="center" mb={1}>
+                  <Avatar
+                    src={file.preview}
+                    alt="Preview"
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      mr: 2,
+                      border: "none",
+                      borderRadius: "20%",
+                    }}
+                  />
+                  <Box flexGrow={1}>
+                    <Typography
+                      variant="body2"
+                      sx={{ whiteSpace: "break-spaces" }}
+                    >
                       {file.name}
                     </Typography>
-                  </>
-                );
-              })}
+                    <Typography variant="body2" color="text.secondary">
+                      {Math.round(file.size / 1024)} KB
+                    </Typography>
+                    {file.uploaded && (
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Button size="small">
+                          <CropIcon /> Crop image
+                        </Button>
+                        <Button
+                          size="small"
+                          color="error"
+                          onClick={() => handleDelete(file)}
+                        >
+                          <DeleteIcon fontSize="small" /> Delete
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
+                  <Box position="relative" width={100}>
+                    {!file.uploaded && (
+                      <>
+                        <LinearProgress
+                          variant="determinate"
+                          value={file.progress}
+                        />
+                        <IconButton
+                          size="small"
+                          sx={{ position: "absolute", right: 0, top: 0 }}
+                          onClick={() => handleDelete(file)}
+                        >
+                          <CancelIcon fontSize="small" />
+                        </IconButton>
+                      </>
+                    )}
+                    {/* {file.uploaded && (
+                      <Badge
+                        badgeContent={<CheckCircleIcon color="success" />}
+                        color="default"
+                        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          Upload success!
+                        </Typography>
+                      </Badge>
+                    )} */}
+                  </Box>
+                  <Radio
+                    checked={selectedImage === file}
+                    onChange={() => setSelectedImage(file)}
+                    value={file}
+                    name="selected-image"
+                  />
+                </Box>
+              ))}
             </Box>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={handleClose}
-              sx={{
-                mt: 2,
-                textTransform: "none",
-              }}
-            >
-              Close
-            </Button>
+            <Box display="flex" justifyContent="space-between" mt={2}>
+              <Button variant="outlined" color="error" onClick={handleClose}>
+                Cancel
+              </Button>
+              {files.length > 0 && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    if (selectedImage) {
+                      console.log(
+                        "Selected Image URL: ",
+                        selectedImage.preview
+                      );
+                      // handleClose();
+                    }
+                  }}
+                >
+                  Select image
+                </Button>
+              )}
+            </Box>
           </Paper>
         </Modal>
       </Box>
-      {/* <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-        <Avatar
-          src={profilePic}
-          alt="Profile Picture"
-          sx={{ width: 100, height: 100 }}
-        />
-        <Button variant="outlined" onClick={onUpdateClick}>
-          Update Picture
-        </Button>
-      </Box> */}
     </>
   );
 };
