@@ -1,0 +1,17 @@
+body {
+  font-family: "Roboto", sans-serif;
+  /* background: rgb(255, 255, 255);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(212, 216, 221, 1) 100%
+  ); */
+}
+
+.dropzone {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
